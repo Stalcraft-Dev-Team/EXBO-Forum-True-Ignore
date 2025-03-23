@@ -220,7 +220,6 @@ async function HideMessagesInDiscussions() {
                 } else if (anchorCount.length > 0) {
                     spanMentionedBySummary.innerHTML = '';
                     spanMentionedBySummary.appendChild(iconEl as unknown as HTMLElement);
-                    console.log(anchorCount.map((el) => el?.textContent));
                     for (let i = 0; i < anchorCount.length; i++) {
                         spanMentionedBySummary.appendChild((anchorCount as ChildNode[])[i]);
                         if (i < anchorCount.length - 2) {
