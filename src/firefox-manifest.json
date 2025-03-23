@@ -1,7 +1,7 @@
 {
   "name": "True Ignore (for EXBO Forum)",
   "description": "Теперь игнорируемые пользователи точно будут скрыты от ваших глаз!",
-  "version": "0.6.60",
+  "version": "0.6.61",
   "manifest_version": 3,
   "browser_specific_settings": {
     "gecko": {
