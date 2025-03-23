@@ -92,16 +92,18 @@ async function HideMessagesInDiscussions() {
             const result: boolean = await GetStorageValue(StorageKeys.HideMessages);
             if (result) {
                 hideMessages();
+                await hideReplies();
                 const observer = new MutationObserver(mutationList =>
                     mutationList
                         .filter(m => m.type === 'childList')
                         .forEach(m => {
-                            m.addedNodes.forEach(() => {
+                            m.addedNodes.forEach(async () => {
                                 if (isCleaningNow)
                                     return;
 
                                 isCleaningNow = true;
                                 hideMessages();
+                                await hideReplies();
                                 isCleaningNow = false;
                             });
                         }));
@@ -152,6 +154,102 @@ async function HideMessagesInDiscussions() {
 
         messagesCount = messagesFeed.childNodes.length;
     }
+
+    // Удаление заблокированных пользователей в надписи "ответили на сообщение"
+    async function hideReplies() {
+        const ignoredUsers: string[] = await GetStorageValue(StorageKeys.IgnoredUsers);
+        if (ignoredUsers === undefined) {
+            return;
+        }
+
+        console.log('Поиск непотребных ответов на сообщения...');
+        const dataNumberIdsToDelete: (string | number)[] = [];
+
+        messagesFeed.childNodes.forEach((div) => {
+
+            const _div: HTMLDivElement = div as HTMLDivElement;
+            let anchorCount: (ChildNode | undefined)[] = [];
+            const spanMentionedBySummary = _div.querySelector('.Post-mentionedBy-summary');
+            const ulMentionByPreview = spanMentionedBySummary
+                ?.parentNode
+                ?.parentNode
+                ?.parentNode
+                ?.parentNode
+                ?.parentNode
+                ?.parentNode
+                ?.querySelector('.Post-mentionedBy-preview');
+            if (ulMentionByPreview) {
+                spanMentionedBySummary?.addEventListener('mouseover', (e) => {
+                    const interval = setInterval(() => {
+                        if (ulMentionByPreview.childNodes.length > 0) {
+                            clearInterval(interval);
+                            (ulMentionByPreview.childNodes as NodeListOf<HTMLLIElement>).forEach((li: HTMLLIElement) => {
+                                if (dataNumberIdsToDelete.includes(li.getAttribute('data-number') || '')) {
+                                    li.remove();
+                                }
+                            });
+                        }
+                    }, tickrate);
+                });
+            }
+            let iconEl = undefined;
+
+            if (spanMentionedBySummary) {
+                spanMentionedBySummary.childNodes.forEach((value: ChildNode, key: number, parent: NodeListOf<ChildNode>) => {
+                    if (value.nodeName === 'I') {
+                        iconEl = value;
+                    }
+                    if (
+                        value.nodeName === 'A' && anchorCount.push(value)
+                        && ignoredUsers.includes((value as HTMLAnchorElement).text)
+                    ) {
+                        dataNumberIdsToDelete.push((value as HTMLAnchorElement)?.getAttribute('data-number') || -1);
+                        anchorCount[anchorCount.length - 1] = undefined;
+                    }
+                });
+
+                anchorCount = anchorCount.filter((el) => el);
+
+                if (spanMentionedBySummary.childNodes.length > 0 && anchorCount.length === 0) {
+                    // const footer = _div.querySelector('.Post-footer');
+                    // const footerUl = footer?.querySelector('ul');
+                    // footerUl?.querySelector('.item-replies')?.remove();
+                    // if (footerUl?.childNodes?.length === 0) {
+                    //     footer?.remove();
+                    // }
+                    spanMentionedBySummary.remove();
+                } else if (anchorCount.length > 0) {
+                    spanMentionedBySummary.innerHTML = '';
+                    spanMentionedBySummary.appendChild(iconEl as unknown as HTMLElement);
+                    for (let i = 0; i < anchorCount.length; i++) {
+                        const el = (anchorCount as ChildNode[])[i];
+                        spanMentionedBySummary.appendChild(el);
+                        if (i === anchorCount.length - 1) {
+                            if (anchorCount.length === 1) {
+                                spanMentionedBySummary.innerHTML += ' ответил(-a) на это сообщение.';
+                            } else {
+                                spanMentionedBySummary.innerHTML += ' ответили на это сообщение.';
+                            }
+                            break;
+                        }
+                        if (i === anchorCount.length - 2) {
+                            spanMentionedBySummary.innerHTML += ' и ';
+                            break;
+                        }
+                        if (i < anchorCount.length - 2) {
+                            spanMentionedBySummary.innerHTML += ', ';
+                            break;
+                        }
+                    }
+                }
+            }
+
+        });
+
+        if (dataNumberIdsToDelete.length > 0) {
+            console.log('Непотребные ответы на сообщения удалены!');
+        }
+    }
 }
 
 // Получить ник сообщения в дискуссии
@@ -167,7 +265,6 @@ function GetMessageCreatorNickname(div: HTMLDivElement): string {
 function GetExtensionUserNickname(): string {
     return document.querySelector('.username')?.textContent || '';
 }
-
 
 
 // Скрытие уведомлений на сайте от игноров
@@ -333,7 +430,6 @@ async function CollectIgnoredUsers() {
 
 
 // Чтение сообщений c service_worker
-
 chrome.runtime.onMessage.addListener(async (message: string, sender, sendResponse) => {
     const response = {result: true, error: ''};
 
