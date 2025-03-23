@@ -3,7 +3,7 @@ import {GetStorageValue, SetStorageValue} from "@/functions";
 
 console.log('True Ignore активирован!');
 
-const tickrate: number = 16.66666667;
+const tickrate: number = 6.94444444;
 
 // Удаление дискуссий
 async function HideDiscussions() {
@@ -185,7 +185,7 @@ async function HideMessagesInDiscussions() {
                             clearInterval(interval);
                             (ulMentionByPreview.childNodes as NodeListOf<HTMLLIElement>).forEach((li: HTMLLIElement) => {
                                 if (dataNumberIdsToDelete.includes(li.getAttribute('data-number') || '')) {
-                                    li.remove();
+                                    li.style.display = 'none';
                                 }
                             });
                         }
@@ -209,7 +209,6 @@ async function HideMessagesInDiscussions() {
                 });
 
                 anchorCount = anchorCount.filter((el) => el);
-
                 if (spanMentionedBySummary.childNodes.length > 0 && anchorCount.length === 0) {
                     // const footer = _div.querySelector('.Post-footer');
                     // const footerUl = footer?.querySelector('ul');
@@ -221,25 +220,25 @@ async function HideMessagesInDiscussions() {
                 } else if (anchorCount.length > 0) {
                     spanMentionedBySummary.innerHTML = '';
                     spanMentionedBySummary.appendChild(iconEl as unknown as HTMLElement);
+                    console.log(anchorCount.map((el) => el?.textContent));
                     for (let i = 0; i < anchorCount.length; i++) {
-                        const el = (anchorCount as ChildNode[])[i];
-                        spanMentionedBySummary.appendChild(el);
+                        spanMentionedBySummary.appendChild((anchorCount as ChildNode[])[i]);
+                        if (i < anchorCount.length - 2) {
+                            spanMentionedBySummary.innerHTML += ', ';
+                            continue;
+                        }
+                        if (i === anchorCount.length - 2) {
+                            spanMentionedBySummary.innerHTML += ' и ';
+                            continue;
+                        }
                         if (i === anchorCount.length - 1) {
                             if (anchorCount.length === 1) {
                                 spanMentionedBySummary.innerHTML += ' ответил(-a) на это сообщение.';
                             } else {
                                 spanMentionedBySummary.innerHTML += ' ответили на это сообщение.';
                             }
-                            break;
                         }
-                        if (i === anchorCount.length - 2) {
-                            spanMentionedBySummary.innerHTML += ' и ';
-                            break;
-                        }
-                        if (i < anchorCount.length - 2) {
-                            spanMentionedBySummary.innerHTML += ', ';
-                            break;
-                        }
+
                     }
                 }
             }
