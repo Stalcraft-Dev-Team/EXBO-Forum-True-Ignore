@@ -40,18 +40,29 @@ async function HideDiscussions() {
         }
     }, tickrate);
 
-    function hideIgnoredDiscussions() {
+    async function hideIgnoredDiscussions() {
         // if (feed.childNodes.length === discussionCount)
         //     return;
         // Тут пока баг, если вернуть то жопа
 
         const dataIdsToDelete: string[] = [];
+        const ignoredUsers: string[] = await GetStorageValue(StorageKeys.IgnoredUsers);
 
         console.log('Поиск непотребных дискуссий...');
+
         feed.childNodes.forEach((li) => {
             const _li: HTMLLIElement = li as HTMLLIElement;
             if (_li.getElementsByClassName('item-user-discussion-ignored')[0] && _li.dataset?.id) {
                 dataIdsToDelete.push(_li.dataset.id);
+            } else { /* Удаление игнорируемого пользователя из последнего ответа */
+                if (ignoredUsers === undefined) {
+                    return;
+                }
+                const terminalPost: HTMLLIElement | undefined = _li.getElementsByClassName('item-terminalPost')[0] as HTMLLIElement;
+                const terminalPostUsername: HTMLSpanElement | undefined = terminalPost?.getElementsByClassName('username')[0] as HTMLSpanElement;
+                if (terminalPostUsername && ignoredUsers.includes(terminalPostUsername.innerText)) {
+                    terminalPost.style.display = 'none';
+                }
             }
         });
 
@@ -137,8 +148,9 @@ async function HideMessagesInDiscussions() {
         dataIdsToDelete.forEach((dataId: string) => {
             const elem = document.querySelector(`[data-id="${dataId}"]`);
 
-            if (elem && !elem.classList.contains(ClassTypes.HideElement))
+            if (elem && !elem.classList.contains(ClassTypes.HideElement)) {
                 elemsToHide.push(elem as HTMLDivElement);
+            }
         });
 
         if (elemsToHide.length > 0) {

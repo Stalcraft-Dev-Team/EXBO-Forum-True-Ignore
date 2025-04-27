@@ -1,4 +1,5 @@
 export enum MessagesTypes {
+    Ping = 'ping',
     DeleteDiscussionsSubscribe = "deleteDiscussionsSubscribe",
     DeleteMessagesInDiscussions = "deleteMessagesInDiscussions",
     CollectIgnoredUsers = "collectIgnoredUsers",

@@ -1,7 +1,7 @@
 {
   "name": "True Ignore (for EXBO Forum)",
   "description": "Теперь игнорируемые пользователи точно будут скрыты от ваших глаз!",
-  "version": "0.6.62",
+  "version": "0.7.0",
   "manifest_version": 3,
   "icons": {
     "16": "icons/16.png",
@@ -28,7 +28,8 @@
         "index.js"
       ],
       "matches": [
-        "https://forum.exbo.net/*"
+        "https://forum.exbo.net/*",
+        "https://forum.exbo.ru/*"
       ]
     }
   ]
